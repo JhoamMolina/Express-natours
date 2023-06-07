@@ -20,6 +20,12 @@ const handleDuplicateFields = (err) => {
   return new AppError(message, 400);
 };
 
+const handleValidationErrorDB = (err) => {
+  const errors = Object.values(err.errors).map((el) => el.message);
+  const message = `Invalid input data, ${errors.join('. ')}`;
+  return new AppError(message, 400);
+};
+
 const sendErrorProduction = (err, res) => {
   // Operational, trusted: send message to clinet
   if (err.isOperational) {
@@ -49,6 +55,7 @@ module.exports = (err, _, res, next) => {
   } else if (process.env.NODE_ENV === 'production') {
     if (err.name === 'CastError') err = handleCastErrorDB(err);
     if (err.code === 11000) err = handleDuplicateFields(err);
+    if (err.name === 'ValidationError') err = handleValidationErrorDB(err);
     sendErrorProduction(err, res);
   }
   next();
